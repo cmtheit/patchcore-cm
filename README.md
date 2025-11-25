@@ -37,32 +37,7 @@ Set the `PYTHONPATH` environment variable with `env PYTHONPATH=src python bin/ru
 To train PatchCore on MVTec AD (as described below), run
 
 ```shell
-datapath="$PWD/data"
-datasets=(
-      # can commentify any item
-      'bottle'
-      'cable'
-      'capsule'
-      'carpet'
-      'grid'
-      'hazelnut'
-      'leather'
-      'metal_nut'
-      'pill'
-      'screw'
-      'tile'
-      'toothbrush'
-      'transistor'
-      'wood'
-      'zipper'
-)
-dataset_flags=($(for dataset in "${datasets[@]}"; do echo '-d '$dataset; done))
-
-python bin/run_patchcore.py --gpu 0 --seed 0 --save_patchcore_model \
---log_group IM224_WR50_L2-3_P01_D1024-1024_PS-3_AN-1_S0 --log_online --log_project MVTecAD_Results results \
-patch_core -b wideresnet50 -le layer2 -le layer3 --faiss_on_gpu \
---pretrain_embed_dimension 1024  --target_embed_dimension 1024 --anomaly_scorer_num_nn 1 --patchsize 3 \
-sampler -p 0.1 approx_greedy_coreset dataset --resize 256 --imagesize 224 "${dataset_flags[@]}" mvtec $datapath
+bash ./scripts/patchcore_train.sh
 ```
 
 which runs PatchCore on MVTec images of sizes 224x224 using a WideResNet50-backbone pretrained on
@@ -72,54 +47,13 @@ ImageNet. For other sample runs with different backbones, larger images or ensem
 Given a pretrained PatchCore model (or models for all MVTec AD subdatasets), these can be evaluated using
 
 ```shell
-datapath="$PWD/data"
-loadpath="$PWD/models"
-modelfolder=IM224_WR50_L2-3_P001_D1024-1024_PS-3_AN-1_S0
-savefolder=evaluated_results'/'$modelfolder
-
-datasets=('bottle' 'cable' 'capsule' 'carpet' 'grid' 'hazelnut' 'leather' 'metal_nut' 'pill' 'screw' 'tile' 'toothbrush' 'transistor' 'wood' 'zipper')
-dataset_flags=($(for dataset in "${datasets[@]}"; do echo '-d '$dataset; done))
-model_flags=($(for dataset in "${datasets[@]}"; do echo '-p '$loadpath'/'$modelfolder'/models/mvtec_'$dataset; done))
-
-python bin/load_and_evaluate_patchcore.py --gpu 0 --seed 0 $savefolder \
-patch_core_loader "${model_flags[@]}" --faiss_on_gpu \
-dataset --resize 366 --imagesize 320 "${dataset_flags[@]}" mvtec $datapath
+# set modeln=x
+modeln=0 bash ./scripts/patchcore_eval.sh
 ```
-
-A set of pretrained PatchCores are hosted here: **add link**. To use them (and replicate training),
-check out `sample_evaluation.sh` and `sample_training.sh`.
 
 ---
 
 ## In-Depth Description
-
-### Requirements
-
-Our results were computed using Python 3.8, with packages and respective version noted in
-`requirements.txt`. In general, the majority of experiments should not exceed 11GB of GPU memory;
-however using significantly large input images will incur higher memory cost.
-
-### Setting up MVTec AD
-
-To set up the main MVTec AD benchmark, download it from here: <https://www.mvtec.com/company/research/datasets/mvtec-ad>.
-Place it in some location `datapath`. Make sure that it follows the following data tree:
-
-```shell
-mvtec
-|-- bottle
-|-----|----- ground_truth
-|-----|----- test
-|-----|--------|------ good
-|-----|--------|------ broken_large
-|-----|--------|------ ...
-|-----|----- train
-|-----|--------|------ good
-|-- cable
-|-- ...
-```
-
-containing in total 15 subdatasets: `bottle`, `cable`, `capsule`, `carpet`, `grid`, `hazelnut`,
-`leather`, `metal_nut`, `pill`, `screw`, `tile`, `toothbrush`, `transistor`, `wood`, `zipper`.
 
 ### "Training" PatchCore
 
