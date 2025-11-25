@@ -14,14 +14,49 @@ _For questions & feedback, please reach out to karsten.rh1@gmail.com!_
 
 ## Quick Guide
 
-First, clone this repository and set the `PYTHONPATH` environment variable with `env PYTHONPATH=src python bin/run_patchcore.py`.
+Clone this repository with `--recurse-submodules`,if you forget doing this, ensure run `git submodule update --init`
+
+Download dataset from <https://www.mydrive.ch/shares/38536/3830184030e49fe74747669442f0f283/download/420938113-1629960298/mvtec_anomaly_detection.tar.xz>.
+Unzip it by
+
+```shell
+mkdir data
+tar zJf mvtec_anomaly_detection.tar.gz -C data/
+```
+
+Then run
+
+```shell
+cd whells/faiss-wheels
+pipx run build --wheel
+```
+
+If it success, you can run patchcore in the next step.
+
+Set the `PYTHONPATH` environment variable with `env PYTHONPATH=src python bin/run_patchcore.py`.
 To train PatchCore on MVTec AD (as described below), run
 
-```
-datapath=/path_to_mvtec_folder/mvtec datasets=('bottle' 'cable' 'capsule' 'carpet' 'grid' 'hazelnut'
-'leather' 'metal_nut' 'pill' 'screw' 'tile' 'toothbrush' 'transistor' 'wood' 'zipper')
+```shell
+datapath="$PWD/data"
+datasets=(
+      # can commentify any item
+      'bottle'
+      'cable'
+      'capsule'
+      'carpet'
+      'grid'
+      'hazelnut'
+      'leather'
+      'metal_nut'
+      'pill'
+      'screw'
+      'tile'
+      'toothbrush'
+      'transistor'
+      'wood'
+      'zipper'
+)
 dataset_flags=($(for dataset in "${datasets[@]}"; do echo '-d '$dataset; done))
-
 
 python bin/run_patchcore.py --gpu 0 --seed 0 --save_patchcore_model \
 --log_group IM224_WR50_L2-3_P01_D1024-1024_PS-3_AN-1_S0 --log_online --log_project MVTecAD_Results results \
@@ -37,12 +72,12 @@ ImageNet. For other sample runs with different backbones, larger images or ensem
 Given a pretrained PatchCore model (or models for all MVTec AD subdatasets), these can be evaluated using
 
 ```shell
-datapath=/path_to_mvtec_folder/mvtec
-loadpath=/path_to_pretrained_patchcores_models
+datapath="$PWD/data"
+loadpath="$PWD/models"
 modelfolder=IM224_WR50_L2-3_P001_D1024-1024_PS-3_AN-1_S0
 savefolder=evaluated_results'/'$modelfolder
 
-datasets=('bottle'  'cable'  'capsule'  'carpet'  'grid'  'hazelnut' 'leather'  'metal_nut'  'pill' 'screw' 'tile' 'toothbrush' 'transistor' 'wood' 'zipper')
+datasets=('bottle' 'cable' 'capsule' 'carpet' 'grid' 'hazelnut' 'leather' 'metal_nut' 'pill' 'screw' 'tile' 'toothbrush' 'transistor' 'wood' 'zipper')
 dataset_flags=($(for dataset in "${datasets[@]}"; do echo '-d '$dataset; done))
 model_flags=($(for dataset in "${datasets[@]}"; do echo '-p '$loadpath'/'$modelfolder'/models/mvtec_'$dataset; done))
 
@@ -51,7 +86,7 @@ patch_core_loader "${model_flags[@]}" --faiss_on_gpu \
 dataset --resize 366 --imagesize 320 "${dataset_flags[@]}" mvtec $datapath
 ```
 
-A set of pretrained PatchCores are hosted here: __add link__. To use them (and replicate training),
+A set of pretrained PatchCores are hosted here: **add link**. To use them (and replicate training),
 check out `sample_evaluation.sh` and `sample_training.sh`.
 
 ---
@@ -119,7 +154,7 @@ dataset # We now pass all the Dataset-relevant parameters.
 Note that `sample_runs.sh` contains exemplary training runs to achieve strong AD performance. Due to
 repository changes (& hardware differences), results may deviate slightly from those reported in the
 paper, but should generally be very close or even better. As mentioned previously, for re-use and
-replicability we have also provided several pretrained PatchCore models hosted at __add link__ -
+replicability we have also provided several pretrained PatchCore models hosted at **add link** -
 download the folder, extract, and pass the model of your choice to
 `bin/load_and_evaluate_patchcore.py` which showcases an exemplary evaluation process.
 
@@ -185,10 +220,10 @@ pretrained models should achieve the performances provided in their respective `
 The mean performance (particularly for the baseline WR50 as well as the larger Ensemble model)
 should look something like:
 
-| Model | Mean AUROC | Mean Seg. AUROC | Mean PRO
-|---|---|---|---|
-| WR50-baseline | 99.2% | 98.1% | 94.4%
-| Ensemble | __99.6%__ | __98.2%__ | __94.9%__
+| Model         | Mean AUROC | Mean Seg. AUROC | Mean PRO  |
+| ------------- | ---------- | --------------- | --------- |
+| WR50-baseline | 99.2%      | 98.1%           | 94.4%     |
+| Ensemble      | **99.6%**  | **98.2%**       | **94.9%** |
 
 ### Citing
 

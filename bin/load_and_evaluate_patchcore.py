@@ -13,6 +13,7 @@ import patchcore.metrics
 import patchcore.patchcore
 import patchcore.sampler
 import patchcore.utils
+import cv2
 
 LOGGER = logging.getLogger(__name__)
 
@@ -150,19 +151,24 @@ def run(methods, results_path, gpu, seed, save_segmentation_images):
                 scores, anomaly_labels
             )["auroc"]
 
+            masks_gt_resized = np.array([
+                cv2.resize(np.array(mask[0]), (224, 224), interpolation=cv2.INTER_NEAREST)
+                for mask in masks_gt
+            ])
+
             # Compute PRO score & PW Auroc for all images
             pixel_scores = patchcore.metrics.compute_pixelwise_retrieval_metrics(
-                segmentations, masks_gt
+                segmentations, masks_gt_resized
             )
             full_pixel_auroc = pixel_scores["auroc"]
 
             # Compute PRO score & PW Auroc only for images with anomalies
             sel_idxs = []
-            for i in range(len(masks_gt)):
-                if np.sum(masks_gt[i]) > 0:
+            for i in range(len(masks_gt_resized)):
+                if np.sum(masks_gt_resized[i]) > 0:
                     sel_idxs.append(i)
             pixel_scores = patchcore.metrics.compute_pixelwise_retrieval_metrics(
-                [segmentations[i] for i in sel_idxs], [masks_gt[i] for i in sel_idxs]
+                [segmentations[i] for i in sel_idxs], [masks_gt_resized[i] for i in sel_idxs]
             )
             anomaly_pixel_auroc = pixel_scores["auroc"]
 

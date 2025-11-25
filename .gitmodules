@@ -1,0 +1,3 @@
+[submodule "wheels/faiss-wheels"]
+	path = wheels/faiss-wheels
+	url = git@github.com:faiss-wheels/faiss-wheels.git
