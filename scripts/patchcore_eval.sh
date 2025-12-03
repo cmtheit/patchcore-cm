@@ -8,6 +8,7 @@ savefolder=evaluated_results'/'$modelfolder
 
 model_flags=($(for dataset in "${datasets[@]}"; do echo '-p '$loadpath'/'$modelfolder'/models/mvtec_'$dataset; done))
 
-python bin/load_and_evaluate_patchcore.py --gpu 0 --seed 0 $savefolder \
+python scripts/load_and_evaluate_patchcore.py --save_segmentation_images --gpu 0 --seed 0 $savefolder \
 patch_core_loader "${model_flags[@]}" --faiss_on_gpu \
-dataset --resize 366 --imagesize 320 "${dataset_flags[@]}" mvtec $datapath
+dataset --resize 366 --imagesize 320 "${dataset_flags[@]}" mvtec $datapath \
+

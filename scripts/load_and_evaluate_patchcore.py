@@ -50,7 +50,7 @@ def run(methods, results_path, gpu, seed, save_segmentation_images):
     dataloader_iter, n_dataloaders = methods["get_dataloaders_iter"]
     dataloader_iter = dataloader_iter(seed)
     patchcore_iter, n_patchcores = methods["get_patchcore_iter"]
-    patchcore_iter = patchcore_iter(device)
+    patchcore_iter = patchcore_iter(device) # type: ignore
     if not (n_dataloaders == n_patchcores or n_patchcores == 1):
         raise ValueError(
             "Please ensure that #PatchCores == #Datasets or #PatchCores == 1!"
@@ -63,7 +63,7 @@ def run(methods, results_path, gpu, seed, save_segmentation_images):
             )
         )
 
-        patchcore.utils.fix_seeds(seed, device)
+        patchcore.utils.fix_seeds(seed, bool(device))
 
         dataset_name = dataloaders["testing"].name
 
@@ -71,17 +71,17 @@ def run(methods, results_path, gpu, seed, save_segmentation_images):
 
             torch.cuda.empty_cache()
             if dataloader_count < n_patchcores:
-                PatchCore_list = next(patchcore_iter)
+                PatchCore_list: list[patchcore.patchcore.PatchCore] = next(patchcore_iter)
 
             aggregator = {"scores": [], "segmentations": []}
-            for i, PatchCore in enumerate(PatchCore_list):
+            for i, PatchCore in enumerate(PatchCore_list): # type: ignore
                 torch.cuda.empty_cache()
                 LOGGER.info(
                     "Embedding test data with models ({}/{})".format(
-                        i + 1, len(PatchCore_list)
+                        i + 1, len(PatchCore_list) # type: ignore
                     )
                 )
-                scores, segmentations, labels_gt, masks_gt = PatchCore.predict(
+                scores, segmentations, labels_gt, masks_gt = PatchCore.predict( # type: ignore
                     dataloaders["testing"]
                 )
                 aggregator["scores"].append(scores)
