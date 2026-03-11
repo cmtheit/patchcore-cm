@@ -235,16 +235,34 @@ class NetworkFeatureAggregator(torch.nn.Module):
             forward_hook = ForwardHook(
                 self.outputs, extract_layer, layers_to_extract_from[-1]
             )
-            if "." in extract_layer:
-                extract_block, extract_idx = extract_layer.split(".")
-                network_layer = backbone.__dict__["_modules"][extract_block]
-                if extract_idx.isnumeric():
-                    extract_idx = int(extract_idx)
-                    network_layer = network_layer[extract_idx]
+            try:
+                if "." in extract_layer:
+                    extract_block, extract_idx = extract_layer.split(".", 1)
+                    if extract_block not in backbone.__dict__["_modules"]:
+                        available_modules = list(backbone.__dict__["_modules"].keys())
+                        raise KeyError(
+                            f"Layer '{extract_block}' not found in backbone. "
+                            f"Available modules: {available_modules}. "
+                            f"For Swin Transformer, use 'layers.1' and 'layers.2' instead of 'layer2' and 'layer3'."
+                        )
+                    network_layer = backbone.__dict__["_modules"][extract_block]
+                    if extract_idx.isnumeric():
+                        extract_idx = int(extract_idx)
+                        network_layer = network_layer[extract_idx]
+                    else:
+                        network_layer = network_layer.__dict__["_modules"][extract_idx]
                 else:
-                    network_layer = network_layer.__dict__["_modules"][extract_idx]
-            else:
-                network_layer = backbone.__dict__["_modules"][extract_layer]
+                    if extract_layer not in backbone.__dict__["_modules"]:
+                        available_modules = list(backbone.__dict__["_modules"].keys())
+                        raise KeyError(
+                            f"Layer '{extract_layer}' not found in backbone. "
+                            f"Available modules: {available_modules}. "
+                            f"For Swin Transformer, use 'layers.1' and 'layers.2' instead of 'layer2' and 'layer3'."
+                        )
+                    network_layer = backbone.__dict__["_modules"][extract_layer]
+            except KeyError as e:
+                LOGGER.error(str(e))
+                raise
 
             if isinstance(network_layer, torch.nn.Sequential):
                 self.backbone.hook_handles.append(

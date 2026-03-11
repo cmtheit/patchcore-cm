@@ -99,10 +99,14 @@ def set_torch_device(gpu_ids):
     Args:
         gpu_ids: [list] list of gpu ids. If empty, cpu is used.
     """
-    if len(gpu_ids):
+    if len(gpu_ids) and torch.cuda.is_available():
         # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         # os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_ids[0])
         return torch.device("cuda:{}".format(gpu_ids[0]))
+    if len(gpu_ids) and not torch.cuda.is_available():
+        LOGGER.warning(
+            "GPU requested but CUDA is not available. Falling back to CPU."
+        )
     return torch.device("cpu")
 
 

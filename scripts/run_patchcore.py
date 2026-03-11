@@ -13,10 +13,9 @@ import patchcore.metrics
 import patchcore.patchcore
 import patchcore.sampler
 import patchcore.utils
+from patchcore.datasets.mvtec import MVTecDataset, DatasetSplit
 
 LOGGER = logging.getLogger(__name__)
-
-_DATASETS = {"mvtec": ["patchcore.datasets.mvtec", "MVTecDataset"]}
 
 
 @click.group(chain=True)
@@ -71,7 +70,7 @@ def run(
             )
         )
 
-        patchcore.utils.fix_seeds(seed, device)
+        patchcore.utils.fix_seeds(seed, bool(device))
 
         dataset_name = dataloaders["training"].name
 
@@ -331,7 +330,6 @@ def sampler(name, percentage):
 
 
 @main.command("dataset")
-@click.argument("name", type=str)
 @click.argument("data_path", type=click.Path(exists=True, file_okay=False))
 @click.option("--subdatasets", "-d", multiple=True, type=str, required=True)
 @click.option("--train_val_split", type=float, default=1, show_default=True)
@@ -341,7 +339,6 @@ def sampler(name, percentage):
 @click.option("--imagesize", default=224, type=int, show_default=True)
 @click.option("--augment", is_flag=True)
 def dataset(
-    name,
     data_path,
     subdatasets,
     train_val_split,
@@ -351,29 +348,26 @@ def dataset(
     num_workers,
     augment,
 ):
-    dataset_info = _DATASETS[name]
-    dataset_library = __import__(dataset_info[0], fromlist=[dataset_info[1]])
-
     def get_dataloaders(seed):
         dataloaders = []
         for subdataset in subdatasets:
-            train_dataset = dataset_library.__dict__[dataset_info[1]](
+            train_dataset = MVTecDataset(
                 data_path,
                 classname=subdataset,
                 resize=resize,
                 train_val_split=train_val_split,
                 imagesize=imagesize,
-                split=dataset_library.DatasetSplit.TRAIN,
+                split=DatasetSplit.TRAIN,
                 seed=seed,
                 augment=augment,
             )
 
-            test_dataset = dataset_library.__dict__[dataset_info[1]](
+            test_dataset = MVTecDataset(
                 data_path,
                 classname=subdataset,
                 resize=resize,
                 imagesize=imagesize,
-                split=dataset_library.DatasetSplit.TEST,
+                split=DatasetSplit.TEST,
                 seed=seed,
             )
 
@@ -393,18 +387,16 @@ def dataset(
                 pin_memory=True,
             )
 
-            train_dataloader.name = name
-            if subdataset is not None:
-                train_dataloader.name += "_" + subdataset
+            train_dataloader.name = f'mvtec_{subdataset}'
 
             if train_val_split < 1:
-                val_dataset = dataset_library.__dict__[dataset_info[1]](
+                val_dataset = MVTecDataset(
                     data_path,
                     classname=subdataset,
                     resize=resize,
                     train_val_split=train_val_split,
                     imagesize=imagesize,
-                    split=dataset_library.DatasetSplit.VAL,
+                    split=DatasetSplit.VAL,
                     seed=seed,
                 )
 

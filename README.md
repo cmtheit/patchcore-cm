@@ -42,7 +42,7 @@ bash ./scripts/patchcore_train.sh
 
 which runs PatchCore on MVTec images of sizes 224x224 using a WideResNet50-backbone pretrained on
 ImageNet. For other sample runs with different backbones, larger images or ensembles, see
-`sample_training.sh`.
+`scripts/sample_training.sh`.
 
 Given a pretrained PatchCore model (or models for all MVTec AD subdatasets), these can be evaluated using
 
